@@ -1,0 +1,202 @@
+---
+title: Social Media Ad Analysis Report
+output: html_fragment
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, error=FALSE)
+
+```
+
+```{css}
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #f8f9fa;
+  color: #333;
+  margin: 20px;
+  padding: 20px;
+}
+
+h1, h2, h3 {
+  color: #2c3e50;
+  font-weight: bold;
+}
+
+h2 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 5px;
+  margin-top: 20px;
+}
+
+p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #3498db;
+  color: white;
+}
+
+code {
+  background-color: #f4f4f4;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.chart-container {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.important {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+```
+
+## introduction 
+Digital advertisements play a crucial role in online engagement and revenue generation.This report tracks the **frequency**, **relevance**, and **engagement levels** of ads seen on various social media platforms, including Instagram, YouTube, Facebook, and TikTok. The data was collected through an observational logging process, where ad occurrences, platform usage, and engagement responses were recorded over multiple sessions.
+
+## Data Overview  
+The dataset consists of observational records of advertisements shown during social media usage. It includes the following key variables:  
+- **Timestamp**: The date and time when the observation was logged.  
+- **Platform Used**: The social media platform(s) on which the ads were displayed.  
+- **Number of Ads Seen**: The total number of ads observed in a 5-minute session.  
+- **Ad Relevance**: Whether the ad was related to the user's recent searches or interests.  
+- **User Engagement**: The action taken in response to the ad (e.g., clicked, liked, ignored).  
+
+## Summary Statistics  
+To gain insights into advertisement exposure, we calculated key summary statistics:  
+- **Minimum and Maximum Ads Shown**: Identifies the range of ads users were exposed to.  
+- **Mean and Median Ads Shown**: Provides an overview of the typical ad exposure per session.  
+- **Total Observations**: The total number of sessions recorded.  
+
+## Data Visualization  
+
+To better understand trends in advertising, we present two key visualizations:  
+
+1. **Ad Distribution Across Platforms**: A bar chart showing how frequently ads appear on different social media platforms.  
+2. **User Engagement with Ads**: A breakdown of user interactions with ads, including likes, clicks, and ignored ads.  
+
+These charts help illustrate which platforms show the most ads and how users typically respond.  
+
+```{r}
+library(tidyverse)
+
+csv_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJYJe1qklDCbFiQ7bHVw9ZQ_Eg-4c66WkrNGxfIf3iuqtwHSrtePMlwyjv38N4fFl5AAGZ7db-JSR4/pub?gid=1042020199&single=true&output=csv"
+logged_data <- read_csv(csv_url)
+
+head(logged_data)
+
+# ----------------------------------------
+# Load the tidyverse package for data manipulation and visualization
+# ----------------------------------------
+library(tidyverse)
+
+# ----------------------------------------
+# Define the CSV URL and read the data
+# ----------------------------------------
+csv_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJYJe1qklDCbFiQ7bHVw9ZQ_Eg-4c66WkrNGxfIf3iuqtwHSrtePMlwyjv38N4fFl5AAGZ7db-JSR4/pub?gid=1042020199&single=true&output=csv"
+
+# Read data into a dataframe called logged_data
+logged_data <- read_csv(csv_url)
+
+# ----------------------------------------
+# Rename columns for easier reference
+# ----------------------------------------
+latest_data <- logged_data %>%
+  rename(
+    timestamp = Timestamp,  # Rename 'Timestamp' to 'timestamp'
+    platform = `What platform were you using?`,  # Rename platform column
+    ad_count = `How many ads did you see in a 5-minute session?`,  # Rename 'ad_count'
+    ad_relevance = `Was the ad relevant to your recent searches/interests?`,  # Rename 'ad_relevance'
+    engagement = `Did you engage with the ad?`  # Rename 'engagement'
+  )
+
+# ----------------------------------------
+# Summary Statistics for the ad count
+# ----------------------------------------
+summary_stats <- latest_data %>%
+  summarise(
+    min_ads = min(ad_count, na.rm = TRUE),  # Minimum number of ads seen
+    max_ads = max(ad_count, na.rm = TRUE),  # Maximum number of ads seen
+    mean_ads = mean(ad_count, na.rm = TRUE),  # Mean number of ads seen
+    median_ads = median(ad_count, na.rm = TRUE),  # Median number of ads seen
+    total_entries = n()  # Total number of entries in the data
+  )
+
+# Print summary statistics to the console
+print(summary_stats)
+
+# ----------------------------------------
+# Bar Chart 1: Ads Seen Per Platform
+# ----------------------------------------
+platform_counts <- latest_data %>%
+  separate_rows(platform, sep = ", ") %>%  # Split multiple platforms into separate rows
+  count(platform, name = "count")  # Count the number of occurrences for each platform
+
+# Create a bar chart showing the number of ads seen per platform
+ggplot(platform_counts, aes(x = reorder(platform, -count), y = count, fill = platform)) +
+  geom_bar(stat = "identity") +  # Use stat="identity" to map counts directly to bars
+  labs(
+    title = "Number of Ads Seen Per Platform",  # Title of the chart
+    x = "Platform",  # Label for x-axis
+    y = "Count"  # Label for y-axis
+  ) +
+  theme_minimal() +  # Minimal theme for cleaner visuals
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+# ----------------------------------------
+# Bar Chart 2: Ad Engagement Types
+# ----------------------------------------
+engagement_counts <- latest_data %>%
+  separate_rows(engagement, sep = ", ") %>%  # Split multiple engagement types into separate rows
+  count(engagement, name = "count")  # Count the number of occurrences for each engagement type
+
+# Create a bar chart showing the types of engagement with ads
+ggplot(engagement_counts, aes(x = reorder(engagement, -count), y = count, fill = engagement)) +
+  geom_bar(stat = "identity") +  # Use stat="identity" to map counts directly to bars
+  labs(
+    title = "User Engagement with Ads",  # Title of the chart
+    x = "Engagement Type",  # Label for x-axis
+    y = "Count"  # Label for y-axis
+  ) +
+  theme_minimal() +  # Minimal theme for cleaner visuals
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+
+# ----------------------------------------
+# Summary for Report Section (Commented)
+# ----------------------------------------
+
+# The following R code produces the necessary analyses and visualizations for your report:
+# 
+# 1. **Summary Values**:
+#    - **Min Ads**: Minimum number of ads seen during a 5-minute session.
+#    - **Max Ads**: Maximum number of ads seen.
+#    - **Mean Ads**: Average number of ads seen.
+#    - **Median Ads**: Median number of ads seen.
+#
+# 2. **Bar Charts**:
+#    - **Bar Chart 1**: Shows the distribution of ads across various platforms.
+#    - **Bar Chart 2**: Displays user engagement types (e.g., Clicked, Liked, Ignored).
+#
+# This analysis helps understand trends in ad visibility and user behavior across platforms.
+
+
+```
